@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Code Review{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Welcome back, {{ current_user.username }}!</h1>
+        <p>Ready to review some code with AI?</p>
+    </div>
+
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-code"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ reviews|length }}</h3>
+                <p>Recent Reviews</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-info">
+                <h3>AI Powered</h3>
+                <p>Smart Analysis</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <div class="stat-info">
+                <h3>Instant</h3>
+                <p>Feedback</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-actions">
+        <a href="{{ url_for('review_page') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>Review Code</h3>
+            <p>Get AI-powered code analysis and suggestions</p>
+        </a>
+
+        <a href="{{ url_for('history') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-history"></i>
+            </div>
+            <h3>View History</h3>
+            <p>Browse your previous code reviews</p>
+        </a>
+    </div>
+
+    {% if reviews %}
+    <div class="recent-reviews">
+        <h2>Recent Reviews</h2>
+        <div class="reviews-grid">
+            {% for review in reviews %}
+            <div class="review-card">
+                <div class="review-header">
+                    <h4>{{ review.title }}</h4>
+                    <span class="review-language">{{ review.language }}</span>
+                </div>
+                <div class="review-preview">
+                    <code>{{ review.code[:100] }}{% if review.code|length > 100 %}...{% endif %}</code>
+                </div>
+                <div class="review-footer">
+                    <span class="review-date">{{ review.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    <button onclick="viewReview({{ review.id }})" class="btn-small">View</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 2.5rem;
+        color: white;
+        margin-bottom: 10px;
+    }
+
+    .dashboard-header p {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin-bottom: 50px;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 30px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-icon i {
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-info h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 5px;
+    }
+
+    .stat-info p {
+        color: #718096;
+        font-weight: 500;
+    }
+
+    .dashboard-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 50px;
+    }
+
+    .action-card {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 40px 30px;
+        border-radius: 20px;
+        text-decoration: none;
+        color: inherit;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .action-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .action-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+
+    .action-icon i {
+        font-size: 2rem;
+        color: white;
+    }
+
+    .action-card h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #2d3748;
+    }
+
+    .action-card p {
+        color: #718096;
+        line-height: 1.6;
+    }
+
+    .recent-reviews {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .recent-reviews h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 30px;
+    }
+
+    .reviews-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+    }
+
+    .review-card {
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 15px;
+        padding: 25px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .review-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .review-header h4 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .review-language {
+        background: #667eea;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .review-preview {
+        background: #2d3748;
+        color: #e2e8f0;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.9rem;
+        overflow: hidden;
+    }
+
+    .review-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .review-date {
+        color: #718096;
+        font-size: 0.9rem;
+    }
+
+    .btn-small {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .btn-small:hover {
+        background: #5a67d8;
+    }
+</style>
+
+<script>
+    function viewReview(reviewId) {
+        fetch('/api/review/' + reviewId)
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (result) {
+                if (result.success) {
+                    window.location.href = '/history#review-' + reviewId;
+                } else {
+                    if (typeof showMessage === 'function') {
+                        showMessage('Failed to load review', 'error');
+                    }
+                }
+            })
+            .catch(function (error) {
+                if (typeof showMessage === 'function') {
+                    showMessage('Error loading review', 'error');
+                }
+            });
+    }
+</script>
+{% endblock %}

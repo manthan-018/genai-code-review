@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if mode == 'register' %}Sign Up{% else %}Login{% endif %} - AI Code Review
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2>{% if mode == 'register' %}Create Account{% else %}Welcome Back{% endif %}</h2>
+            <p>{% if mode == 'register' %}Join our AI-powered code review platform{% else %}Sign in to continue your code review journey{% endif %}</p>
+        </div>
+        
+        <form id="authForm" class="auth-form">
+            {% if mode == 'register' %}
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+                <i class="fas fa-envelope form-icon"></i>
+            </div>
+            {% endif %}
+            
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+                <i class="fas fa-user form-icon"></i>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+                <i class="fas fa-lock form-icon"></i>
+                <button type="button" class="password-toggle" onclick="togglePassword()">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            
+            {% if mode == 'register' %}
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                <i class="fas fa-lock form-icon"></i>
+            </div>
+            {% endif %}
+            
+            <button type="submit" class="btn btn-primary btn-full">
+                <i class="fas fa-{% if mode == 'register' %}user-plus{% else %}sign-in-alt{% endif %}"></i>
+                {% if mode == 'register' %}Create Account{% else %}Sign In{% endif %}
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            {% if mode == 'register' %}
+            <p>Already have an account? <a href="{{ url_for('login') }}">Sign in</a></p>
+            {% else %}
+            <p>Don't have an account? <a href="{{ url_for('register') }}">Sign up</a></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div id="message" class="message"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var authForm = document.getElementById('authForm');
+    var isRegisterMode = '{{ mode }}' === 'register';
+    var isLoginMode = '{{ mode }}' === 'login';
+    
+    authForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = new FormData(authForm);
+        var data = {};
+        for (var pair of formData.entries()) {
+            data[pair[0]] = pair[1];
+        }
+        
+        if (isRegisterMode && data.password !== data.confirmPassword) {
+            showMessage('Passwords do not match', 'error');
+            return;
+        }
+        
+        showLoading(true);
+        
+        fetch('{{ url_for(mode) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(result) {
+            if (result.success) {
+                showMessage(result.message, 'success');
+                if (isLoginMode) {
+                    setTimeout(function() {
+                        window.location.href = '{{ url_for("index") }}';
+                    }, 1000);
+                } else {
+                    setTimeout(function() {
+                        window.location.href = '{{ url_for("login") }}';
+                    }, 1000);
+                }
+            } else {
+                showMessage(result.message, 'error');
+            }
+        })
+        .catch(function(error) {
+            showMessage('An error occurred. Please try again.', 'error');
+        })
+        .finally(function() {
+            showLoading(false);
+        });
+    });
+});
+
+function togglePassword() {
+    var passwordInput = document.getElementById('password');
+    var toggleIcon = document.querySelector('.password-toggle i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+}
+</script>
+{% endblock %}

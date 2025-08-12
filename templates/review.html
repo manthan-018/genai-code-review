@@ -1,0 +1,2203 @@
+{% extends "base.html" %}
+
+{% block title %}Code Review - AI Code Review{% endblock %}
+
+{% block content %}
+<div class="review-container">
+    <div class="review-header">
+        <h1><i class="fas fa-search"></i> AI Code Review</h1>
+        <p>Get intelligent analysis and suggestions for your code</p>
+    </div>
+    
+    <div class="review-form">
+        <div class="form-section">
+            <div class="form-group">
+                <label for="titleInput">Review Title</label>
+                <input type="text" id="titleInput" placeholder="Enter a title for your review">
+            </div>
+            
+            <div class="form-group">
+                <label for="languageSelect">Programming Language</label>
+                <select id="languageSelect">
+                    <option value="python">Python</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="java">Java</option>
+                    <option value="cpp">C++</option>
+                    <option value="csharp">C#</option>
+                    <option value="php">PHP</option>
+                    <option value="ruby">Ruby</option>
+                    <option value="go">Go</option>
+                    <option value="rust">Rust</option>
+                    <option value="typescript">TypeScript</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="codeInput">Your Code</label>
+            <textarea id="codeInput" placeholder="Paste your code here..." rows="15"></textarea>
+        </div>
+        
+        <div class="form-group debug-section" style="display: none;">
+            <label for="errorInput">Error Message (Optional)</label>
+            <textarea id="errorInput" placeholder="If you have an error message, paste it here..." rows="4"></textarea>
+        </div>
+        
+        <div class="form-actions">
+            <button onclick="analyzeCode()" class="btn btn-primary">
+                <i class="fas fa-microscope"></i>
+                Comprehensive Analysis
+            </button>
+            <button onclick="quickReview()" class="btn btn-secondary">
+                <i class="fas fa-search"></i>
+                Quick Review
+            </button>
+            <button onclick="clearResults()" class="btn btn-clear">
+                <i class="fas fa-trash"></i>
+                Clear Results
+            </button>
+        </div>
+    </div>
+    
+    <div id="analysisResult" class="result-container" style="display: none;">
+        <h2><i class="fas fa-microscope"></i> Comprehensive Code Analysis</h2>
+        <div id="analysisContent">
+            <!-- Analysis results will be populated by JavaScript -->
+        </div>
+    </div>
+    
+    <div id="reviewResult" class="result-container" style="display: none;">
+        <h2><i class="fas fa-clipboard-check"></i> Quick Review Results</h2>
+        <!-- Quick review results will be populated by JavaScript -->
+    </div>
+</div>
+
+<style>
+.review-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.review-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.review-header h1 {
+    font-size: 2.5rem;
+    color: white;
+    margin-bottom: 10px;
+}
+
+.review-header h1 i {
+    margin-right: 15px;
+    color: #ffd700;
+}
+
+.review-header p {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.review-form {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    margin-bottom: 40px;
+}
+
+.form-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1.1rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group textarea {
+    font-family: 'Fira Code', monospace;
+    resize: vertical;
+    min-height: 200px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.debug-section {
+    border-top: 2px dashed #e2e8f0;
+    padding-top: 25px;
+    margin-top: 25px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.btn-debug {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
+}
+
+.btn-debug:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 101, 101, 0.6);
+}
+
+.btn-clear {
+    background: #718096;
+    color: white;
+}
+
+.btn-clear:hover {
+    background: #4a5568;
+    transform: translateY(-2px);
+}
+
+.result-container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    margin-bottom: 40px;
+}
+
+.result-container h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.result-container h2 i {
+    color: #667eea;
+}
+
+.debug-result h2 i {
+    color: #f56565;
+}
+
+.review-summary {
+    background: #f7fafc;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    border-left: 5px solid #667eea;
+}
+
+.rating {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.rating-label {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1.1rem;
+}
+
+.rating-stars {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rating-stars i {
+    color: #ffd700;
+    font-size: 1.2rem;
+}
+
+.rating-number {
+    font-weight: 700;
+    color: #2d3748;
+    margin-left: 10px;
+    font-size: 1.1rem;
+}
+
+.summary {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #4a5568;
+}
+
+.review-section {
+    margin-bottom: 30px;
+    padding: 25px;
+    background: white;
+    border-radius: 15px;
+    border: 1px solid #e2e8f0;
+}
+
+.review-section h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.review-section h3 i {
+    color: #667eea;
+}
+
+.review-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.review-section li {
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+    position: relative;
+    padding-left: 25px;
+}
+
+.review-section li:last-child {
+    border-bottom: none;
+}
+
+.review-section li:before {
+    content: '•';
+    color: #667eea;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+.issue-list li:before {
+    content: '⚠';
+    color: #f56565;
+}
+
+.suggestion-list li:before {
+    content: '💡';
+}
+
+.security-list li:before {
+    content: '🛡';
+}
+
+.performance-list li:before {
+    content: '🚀';
+}
+
+.debug-section {
+    margin-bottom: 30px;
+    padding: 25px;
+    background: white;
+    border-radius: 15px;
+    border: 1px solid #e2e8f0;
+}
+
+.debug-section h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.debug-section h3 i {
+    color: #f56565;
+}
+
+.debug-section pre {
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 20px;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-family: 'Fira Code', monospace;
+    line-height: 1.6;
+}
+
+.debug-section p {
+    line-height: 1.6;
+    color: #4a5568;
+}
+
+.debug-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.debug-section li {
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+    position: relative;
+    padding-left: 25px;
+}
+
+.debug-section li:last-child {
+    border-bottom: none;
+}
+
+.debug-section li:before {
+    content: '💡';
+    position: absolute;
+    left: 0;
+}
+
+/* Error Detection Styles */
+.error-detection-section {
+    margin-bottom: 40px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.error-detection-section.has-errors {
+    border: 3px solid #f56565;
+}
+
+.error-detection-section.no-errors {
+    border: 3px solid #48bb78;
+}
+
+.error-status-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 25px 30px;
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: white;
+}
+
+.error-detection-section.no-errors .error-status-header {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.error-status-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+}
+
+.error-status-info h2 {
+    font-size: 1.8rem;
+    margin: 0 0 8px 0;
+    font-weight: 700;
+}
+
+.error-status-info p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+.detailed-errors {
+    background: white;
+    padding: 30px;
+}
+
+.detailed-errors h3 {
+    font-size: 1.4rem;
+    color: #2d3748;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.error-item {
+    background: #fef5e7;
+    border: 1px solid #f6ad55;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    overflow: hidden;
+}
+
+.error-header {
+    background: #f6ad55;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 600;
+}
+
+.error-number {
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.error-type {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.error-type.syntax {
+    background: #f56565;
+}
+
+.error-type.logic {
+    background: #ed8936;
+}
+
+.error-type.runtime {
+    background: #e53e3e;
+}
+
+.error-type.semantic {
+    background: #d69e2e;
+}
+
+.line-number {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.error-content {
+    padding: 20px;
+}
+
+.error-description, .error-explanation, .error-solution {
+    margin-bottom: 20px;
+}
+
+.error-description h4, .error-explanation h4, .error-solution h4 {
+    font-size: 1.1rem;
+    color: #2d3748;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.error-description i {
+    color: #f56565;
+}
+
+.error-explanation i {
+    color: #ed8936;
+}
+
+.error-solution i {
+    color: #48bb78;
+}
+
+.corrected-snippet {
+    margin-top: 15px;
+    background: #2d3748;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.corrected-snippet h5 {
+    background: #4a5568;
+    color: white;
+    padding: 10px 15px;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.corrected-snippet pre {
+    margin: 0;
+    padding: 15px;
+}
+
+.error-categories {
+    background: white;
+    padding: 30px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.category-item {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.category-item h4 {
+    font-size: 1rem;
+    color: #2d3748;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+/* Enhanced Debug Analysis Styles */
+.code-health-indicator {
+    margin-bottom: 25px;
+}
+
+.health-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.health-status.healthy {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.health-status.has_issues {
+    background: #fef5e7;
+    color: #c05621;
+}
+
+.health-status.critical_issues {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.debugging-priority {
+    background: #edf2f7;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+}
+
+.debugging-priority h4 {
+    color: #2d3748;
+    margin-bottom: 15px;
+}
+
+.priority-list {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.priority-list li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.fixed-code-section {
+    background: #f8fafc;
+    padding: 25px;
+    border-radius: 12px;
+    margin-top: 25px;
+}
+
+.code-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.original-code, .fixed-code {
+    background: #2d3748;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.original-code h5, .fixed-code h5 {
+    background: #4a5568;
+    color: white;
+    padding: 10px 15px;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.original-code h5 {
+    background: #e53e3e;
+}
+
+.fixed-code h5 {
+    background: #48bb78;
+}
+
+.fix-explanation {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-left: 4px solid #48bb78;
+}
+
+.fix-explanation h5 {
+    color: #2d3748;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.copy-fixed-code {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.testing-suggestions {
+    background: #e6fffa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 25px;
+    border-left: 4px solid #38b2ac;
+}
+
+.testing-suggestions h4 {
+    color: #2d3748;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.testing-list {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.testing-list li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+/* Comprehensive Analysis Styles */
+.analysis-overview {
+    margin-bottom: 40px;
+}
+
+.score-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+}
+
+.score-card.critical {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+}
+
+.score-card.warning {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+}
+
+.score-card.good {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.main-issues {
+    margin-bottom: 20px;
+}
+
+.main-issues h4 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.main-issues h4 i {
+    color: #ffd700;
+}
+
+.score-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    backdrop-filter: blur(10px);
+}
+
+.score {
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.score-label {
+    font-size: 0.9rem;
+    margin-top: 5px;
+    opacity: 0.9;
+}
+
+.score-details h3 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+}
+
+.strengths, .weaknesses {
+    margin-bottom: 20px;
+}
+
+.strengths h4, .weaknesses h4 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.strengths h4 i {
+    color: #48bb78;
+}
+
+.weaknesses h4 i {
+    color: #f56565;
+}
+
+.analysis-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.analysis-section h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.debug-grid, .review-grid, .security-grid, .performance-grid, .improvement-grid {
+    display: grid;
+    gap: 25px;
+}
+
+.debug-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.debug-item, .security-item, .performance-item, .improvement-item {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.debug-item h4, .security-item h4, .performance-item h4, .improvement-item h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 15px;
+}
+
+.fixed-code {
+    margin-top: 25px;
+    background: #2d3748;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.fixed-code h4 {
+    background: #4a5568;
+    color: white;
+    padding: 15px 20px;
+    margin: 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fixed-code pre {
+    margin: 0;
+    padding: 20px;
+    background: transparent;
+}
+
+.review-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.metric-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 25px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.metric-card.overall-rating {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.metric-card.overall-rating .metric-header h4 {
+    color: white;
+}
+
+.metric-card.overall-rating .rating-number {
+    color: white;
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.metric-header h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+}
+
+.rating-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.rating-stars i {
+    font-size: 1rem;
+    color: #ffd700;
+}
+
+.rating-number {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.metric-description {
+    color: #4a5568;
+    line-height: 1.5;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.metric-card.overall-rating .metric-description {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Legacy support for old review grid */
+.review-grid {
+    grid-template-columns: auto 1fr;
+    gap: 30px;
+}
+
+.review-metric {
+    text-align: center;
+}
+
+.metric-label {
+    display: block;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 10px;
+}
+
+.review-details {
+    display: grid;
+    gap: 20px;
+}
+
+.detail-item {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.detail-item h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 8px;
+}
+
+.detail-item p {
+    color: #4a5568;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.security-grid, .performance-grid, .improvement-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.vulnerability-list li, .recommendation-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.vulnerability-list i {
+    color: #f56565;
+    margin-top: 2px;
+}
+
+.recommendation-list i {
+    color: #48bb78;
+    margin-top: 2px;
+}
+
+.priority-section {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.priority-section h3 {
+    color: white;
+    border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.priority-list {
+    display: grid;
+    gap: 15px;
+}
+
+.priority-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.priority-number {
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.priority-text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+/* Enhanced Error Display Styles */
+.error-item.critical {
+    border-color: #e53e3e;
+    background: #fed7d7;
+}
+
+.error-item.high {
+    border-color: #f56565;
+    background: #fef5e7;
+}
+
+.error-item.medium {
+    border-color: #ed8936;
+    background: #fef5e7;
+}
+
+.error-item.low {
+    border-color: #d69e2e;
+    background: #fffbeb;
+}
+
+.error-severity {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.error-severity.critical {
+    background: #e53e3e;
+    color: white;
+}
+
+.error-severity.high {
+    background: #f56565;
+    color: white;
+}
+
+.error-severity.medium {
+    background: #ed8936;
+    color: white;
+}
+
+.error-severity.low {
+    background: #d69e2e;
+    color: white;
+}
+
+.problematic-line {
+    background: #2d3748;
+    margin: 15px 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.problematic-line h5 {
+    background: #e53e3e;
+    color: white;
+    padding: 8px 15px;
+    margin: 0;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.line-display {
+    display: flex;
+    align-items: center;
+    background: #2d3748;
+    color: #e2e8f0;
+    font-family: 'Fira Code', monospace;
+    position: relative;
+    padding: 10px 0;
+}
+
+.line-display.fixed .line-num {
+    background: #48bb78;
+}
+
+.line-display.fixed {
+    background: #1a202c;
+}
+
+.line-num {
+    background: #4a5568;
+    color: white;
+    padding: 5px 10px;
+    min-width: 40px;
+    text-align: center;
+    font-size: 0.8rem;
+    margin-right: 15px;
+}
+
+.line-code {
+    flex: 1;
+    padding: 5px 15px 5px 0;
+    font-size: 0.9rem;
+}
+
+.column-indicator {
+    position: absolute;
+    color: #f56565;
+    font-weight: bold;
+    font-size: 1.2rem;
+    bottom: -5px;
+}
+
+.line-fix {
+    margin: 15px 0;
+}
+
+.line-fix h6 {
+    color: #48bb78;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Complexity Analysis Styles */
+.complexity-overview {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.complexity-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+}
+
+.complexity-card.space-complexity {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.complexity-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.complexity-header i {
+    font-size: 1.5rem;
+}
+
+.complexity-header h4 {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.complexity-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    font-family: 'Fira Code', monospace;
+}
+
+.complexity-breakdown {
+    margin-bottom: 30px;
+}
+
+.complexity-breakdown h4 {
+    color: #2d3748;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.breakdown-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.breakdown-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.breakdown-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.function-name {
+    font-weight: 600;
+    color: #2d3748;
+    font-family: 'Fira Code', monospace;
+}
+
+.line-range {
+    background: #e2e8f0;
+    color: #4a5568;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
+.complexity-badge {
+    background: #667eea;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-weight: 600;
+    font-family: 'Fira Code', monospace;
+}
+
+.complexity-badge.space {
+    background: #48bb78;
+}
+
+.breakdown-explanation {
+    color: #4a5568;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.complexity-details {
+    background: #f8fafc;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.complexity-scenarios {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.scenario {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.scenario.best-case {
+    border-left-color: #48bb78;
+}
+
+.scenario.average-case {
+    border-left-color: #ed8936;
+}
+
+.scenario.worst-case {
+    border-left-color: #f56565;
+}
+
+.scenario h5 {
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+.scenario p {
+    color: #4a5568;
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.scalability-notes {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #38b2ac;
+}
+
+.scalability-notes h5 {
+    color: #2d3748;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.performance-item.bottlenecks {
+    border-left-color: #f56565;
+}
+
+.performance-item.optimizations {
+    border-left-color: #48bb78;
+}
+
+/* Line-by-Line Analysis Styles */
+.line-analysis-section {
+    margin-top: 30px;
+    background: #f8fafc;
+    padding: 25px;
+    border-radius: 12px;
+}
+
+.line-analysis-section h4 {
+    color: #2d3748;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.line-analysis-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.line-analysis-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.line-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.line-number {
+    background: #667eea;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.line-quality-score {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.score-label {
+    font-size: 0.9rem;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.mini-stars {
+    display: flex;
+    gap: 1px;
+}
+
+.mini-star {
+    font-size: 0.8rem !important;
+}
+
+.score-number {
+    font-size: 0.8rem;
+    color: #4a5568;
+    font-weight: 600;
+}
+
+.line-content-display {
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+}
+
+.line-issues, .line-suggestions, .line-complexity {
+    margin-bottom: 15px;
+}
+
+.line-issues h6, .line-suggestions h6, .line-complexity h6 {
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.line-issues h6 i {
+    color: #f56565;
+}
+
+.line-suggestions h6 i {
+    color: #48bb78;
+}
+
+.line-complexity h6 i {
+    color: #667eea;
+}
+
+.line-issues ul, .line-suggestions ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.line-issues li, .line-suggestions li {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.line-complexity p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #4a5568;
+    line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+    .form-section {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .review-header h1 {
+        font-size: 2rem;
+    }
+    
+    .review-form,
+    .result-container {
+        padding: 25px;
+    }
+    
+    .score-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 20px;
+    }
+    
+    .debug-grid, .security-grid, .performance-grid, .improvement-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .review-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .review-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metric-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .rating-display {
+        align-items: flex-start;
+    }
+    
+    .complexity-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .complexity-scenarios {
+        grid-template-columns: 1fr;
+    }
+    
+    .breakdown-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .line-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+</style>
+
+<script>
+// Comprehensive code analysis function
+async function analyzeCode() {
+    const code = document.getElementById('codeInput').value.trim();
+    const language = document.getElementById('languageSelect').value;
+    const title = document.getElementById('titleInput').value.trim() || 'Comprehensive Analysis';
+    const error = document.getElementById('errorInput').value.trim();
+    
+    if (!code) {
+        showMessage('Please enter some code to analyze', 'error');
+        return;
+    }
+    
+    const loadingMessages = [
+        'Initializing comprehensive analysis...',
+        'Debugging code structure...',
+        'Analyzing code quality...',
+        'Checking security vulnerabilities...',
+        'Evaluating performance...',
+        'Generating improvement suggestions...',
+        'Finalizing analysis report...'
+    ];
+    
+    let messageIndex = 0;
+    const loadingInterval = setInterval(() => {
+        const loadingText = document.querySelector('.loading-spinner p');
+        if (loadingText && messageIndex < loadingMessages.length) {
+            loadingText.textContent = loadingMessages[messageIndex];
+            messageIndex++;
+        }
+    }, 2000);
+    
+    try {
+        showLoading(true);
+        
+        const startTime = Date.now();
+        const response = await fetch('/api/analyze-code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                code: code,
+                language: language,
+                title: title,
+                error: error
+            })
+        });
+        
+        const result = await response.json();
+        const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        
+        clearInterval(loadingInterval);
+        
+        if (result.success) {
+            displayComprehensiveAnalysis(result.analysis);
+            showMessage(`Comprehensive analysis completed in ${processingTime}s!`, 'success');
+        } else {
+            showMessage(result.error || 'Failed to analyze code', 'error');
+        }
+    } catch (error) {
+        clearInterval(loadingInterval);
+        showMessage('An error occurred during analysis', 'error');
+        console.error('Error:', error);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Quick review function (simplified)
+async function quickReview() {
+    const code = document.getElementById('codeInput').value.trim();
+    const language = document.getElementById('languageSelect').value;
+    const title = document.getElementById('titleInput').value.trim() || 'Quick Review';
+    
+    if (!code) {
+        showMessage('Please enter some code to review', 'error');
+        return;
+    }
+    
+    try {
+        showLoading(true);
+        
+        const response = await fetch('/api/review-code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                code: code,
+                language: language,
+                title: title
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            displayReviewResult(result.review || result.analysis);
+            showMessage('Quick review completed!', 'success');
+        } else {
+            showMessage(result.error || 'Failed to review code', 'error');
+        }
+    } catch (error) {
+        showMessage('An error occurred during review', 'error');
+        console.error('Error:', error);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Display comprehensive analysis results
+function displayComprehensiveAnalysis(analysisText) {
+    const resultContainer = document.getElementById('analysisResult');
+    const contentContainer = document.getElementById('analysisContent');
+    
+    if (!resultContainer || !contentContainer) return;
+    
+    try {
+        const analysis = JSON.parse(analysisText);
+        
+        // Error Detection Section (Most Important - Show First)
+        let html = '';
+        
+        if (analysis.error_detection) {
+            const hasErrors = analysis.error_detection.has_errors;
+            const errorStatus = analysis.summary?.error_status || 'unknown';
+            
+            html += `
+                <div class="error-detection-section ${hasErrors ? 'has-errors' : 'no-errors'}">
+                    <div class="error-status-header">
+                        <div class="error-status-icon">
+                            <i class="fas ${hasErrors ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i>
+                        </div>
+                        <div class="error-status-info">
+                            <h2>${hasErrors ? 'Errors Detected' : 'No Critical Errors Found'}</h2>
+                            <p>${analysis.error_detection.error_summary || 'Code appears to be error-free'}</p>
+                        </div>
+                    </div>
+                    
+                    ${analysis.error_detection.detailed_errors && analysis.error_detection.detailed_errors.length > 0 ? `
+                        <div class="detailed-errors">
+                            <h3><i class="fas fa-bug"></i> Detailed Error Analysis</h3>
+                            ${analysis.error_detection.detailed_errors.map((error, index) => `
+                                <div class="error-item ${error.error_severity || 'medium'}">
+                                    <div class="error-header">
+                                        <span class="error-number">${index + 1}</span>
+                                        <span class="error-type ${error.error_type}">${error.error_type?.toUpperCase() || 'ERROR'}</span>
+                                        ${error.line_number ? `<span class="line-number">Line ${error.line_number}</span>` : ''}
+                                        ${error.error_severity ? `<span class="error-severity ${error.error_severity}">${error.error_severity.toUpperCase()}</span>` : ''}
+                                    </div>
+                                    
+                                    ${error.line_content ? `
+                                        <div class="problematic-line">
+                                            <h5><i class="fas fa-code"></i> Problematic Line:</h5>
+                                            <div class="line-display">
+                                                <span class="line-num">${error.line_number}</span>
+                                                <code class="line-code">${error.line_content}</code>
+                                                ${error.column_position ? `<span class="column-indicator" style="left: ${error.column_position * 8 + 50}px;">^</span>` : ''}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                    
+                                    <div class="error-content">
+                                        <div class="error-description">
+                                            <h4><i class="fas fa-exclamation-circle"></i> What's Wrong</h4>
+                                            <p><strong>Error:</strong> ${error.actual_error || error.error_description}</p>
+                                        </div>
+                                        <div class="error-explanation">
+                                            <h4><i class="fas fa-question-circle"></i> Why This Happens</h4>
+                                            <p>${error.why_it_happens}</p>
+                                        </div>
+                                        <div class="error-solution">
+                                            <h4><i class="fas fa-wrench"></i> How to Fix</h4>
+                                            <p>${error.how_to_fix}</p>
+                                            
+                                            ${error.corrected_line ? `
+                                                <div class="line-fix">
+                                                    <h6>Fixed Line:</h6>
+                                                    <div class="line-display fixed">
+                                                        <span class="line-num">${error.line_number}</span>
+                                                        <code class="line-code">${error.corrected_line}</code>
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                            
+                                            ${error.corrected_code_snippet ? `
+                                                <div class="corrected-snippet">
+                                                    <h6>Complete Fix:</h6>
+                                                    <pre><code class="language-${document.getElementById('languageSelect').value}">${error.corrected_code_snippet}</code></pre>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    ${analysis.error_detection.error_categories ? `
+                        <div class="error-categories">
+                            <h3><i class="fas fa-list"></i> Error Categories</h3>
+                            <div class="category-grid">
+                                ${Object.entries(analysis.error_detection.error_categories).map(([category, errors]) => `
+                                    <div class="category-item">
+                                        <h4>${category.replace('_', ' ').toUpperCase()}</h4>
+                                        <ul>${errors.map(error => `<li>${error}</li>`).join('')}</ul>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // Analysis Overview
+        html += `
+            <div class="analysis-overview">
+                <div class="score-card ${analysis.summary?.error_status === 'critical-errors' ? 'critical' : analysis.summary?.error_status === 'has-errors' ? 'warning' : 'good'}">
+                    <div class="score-circle">
+                        <span class="score">${analysis.summary?.overall_score || 'N/A'}</span>
+                        <span class="score-label">Overall Score</span>
+                    </div>
+                    <div class="score-details">
+                        <h3>Analysis Summary</h3>
+                        ${analysis.summary?.main_issues ? `
+                            <div class="main-issues">
+                                <h4><i class="fas fa-exclamation-triangle"></i> Main Issues</h4>
+                                <ul>${analysis.summary.main_issues.map(issue => `<li>${issue}</li>`).join('')}</ul>
+                            </div>
+                        ` : ''}
+                        <div class="strengths">
+                            <h4><i class="fas fa-check-circle"></i> Strengths</h4>
+                            <ul>${(analysis.summary?.strengths || []).map(s => `<li>${s}</li>`).join('')}</ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Enhanced Debug Analysis Section
+        if (analysis.debug_analysis) {
+            const codeHealth = analysis.debug_analysis.overall_code_health;
+            html += `
+                <div class="analysis-section debug-section">
+                    <h3><i class="fas fa-stethoscope"></i> Debug Analysis</h3>
+                    
+                    <div class="code-health-indicator">
+                        <div class="health-status ${codeHealth}">
+                            <i class="fas ${codeHealth === 'healthy' ? 'fa-heart' : codeHealth === 'has_issues' ? 'fa-exclamation-triangle' : 'fa-times-circle'}"></i>
+                            <span>Code Health: ${codeHealth?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}</span>
+                        </div>
+                    </div>
+                    
+                    ${analysis.debug_analysis.debugging_priority && analysis.debug_analysis.debugging_priority.length > 0 ? `
+                        <div class="debugging-priority">
+                            <h4><i class="fas fa-list-ol"></i> Debugging Priority</h4>
+                            <ol class="priority-list">
+                                ${analysis.debug_analysis.debugging_priority.map(priority => `<li>${priority}</li>`).join('')}
+                            </ol>
+                        </div>
+                    ` : ''}
+                    
+                    ${analysis.debug_analysis.fixed_code && analysis.debug_analysis.fixed_code !== 'Original code - manual debugging required' ? `
+                        <div class="fixed-code-section">
+                            <h4><i class="fas fa-code"></i> Complete Fixed Code</h4>
+                            <div class="code-comparison">
+                                <div class="original-code">
+                                    <h5>Original Code:</h5>
+                                    <pre><code class="language-${document.getElementById('languageSelect').value}">${document.getElementById('codeInput').value}</code></pre>
+                                </div>
+                                <div class="fixed-code">
+                                    <h5>Fixed Code:</h5>
+                                    <pre><code class="language-${document.getElementById('languageSelect').value}">${analysis.debug_analysis.fixed_code}</code></pre>
+                                </div>
+                            </div>
+                            
+                            ${analysis.debug_analysis.explanation_of_fixes ? `
+                                <div class="fix-explanation">
+                                    <h5><i class="fas fa-lightbulb"></i> Explanation of Fixes</h5>
+                                    <p>${analysis.debug_analysis.explanation_of_fixes}</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="copy-fixed-code">
+                                <button onclick="copyFixedCode('${analysis.debug_analysis.fixed_code.replace(/'/g, "\\'")}', this)" class="btn btn-copy">
+                                    <i class="fas fa-copy"></i> Copy Fixed Code
+                                </button>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${analysis.debug_analysis.testing_suggestions && analysis.debug_analysis.testing_suggestions.length > 0 ? `
+                        <div class="testing-suggestions">
+                            <h4><i class="fas fa-vial"></i> Testing Suggestions</h4>
+                            <ul class="testing-list">
+                                ${analysis.debug_analysis.testing_suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // Code Review Section
+        if (analysis.code_review) {
+            html += `
+                <div class="analysis-section review-section">
+                    <h3><i class="fas fa-clipboard-check"></i> Code Quality Review</h3>
+                    <div class="review-metrics-grid">
+                        <div class="metric-card overall-rating">
+                            <div class="metric-header">
+                                <h4>Overall Rating</h4>
+                                <div class="rating-display">
+                                    <div class="rating-stars">
+                                        ${generateStars(analysis.code_review.overall_rating || 0)}
+                                    </div>
+                                    <span class="rating-number">${analysis.code_review.overall_rating || 'N/A'}/10</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <h4>Code Quality</h4>
+                                <div class="rating-display">
+                                    <div class="rating-stars">
+                                        ${generateStars(analysis.code_review.code_quality?.rating || analysis.code_review.code_quality || 0)}
+                                    </div>
+                                    <span class="rating-number">${analysis.code_review.code_quality?.rating || analysis.code_review.code_quality || 'N/A'}/10</span>
+                                </div>
+                            </div>
+                            <p class="metric-description">${analysis.code_review.code_quality?.assessment || analysis.code_review.code_quality || 'No assessment available'}</p>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <h4>Readability</h4>
+                                <div class="rating-display">
+                                    <div class="rating-stars">
+                                        ${generateStars(analysis.code_review.readability?.rating || analysis.code_review.readability || 0)}
+                                    </div>
+                                    <span class="rating-number">${analysis.code_review.readability?.rating || analysis.code_review.readability || 'N/A'}/10</span>
+                                </div>
+                            </div>
+                            <p class="metric-description">${analysis.code_review.readability?.assessment || analysis.code_review.readability || 'No assessment available'}</p>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <h4>Maintainability</h4>
+                                <div class="rating-display">
+                                    <div class="rating-stars">
+                                        ${generateStars(analysis.code_review.maintainability?.rating || analysis.code_review.maintainability || 0)}
+                                    </div>
+                                    <span class="rating-number">${analysis.code_review.maintainability?.rating || analysis.code_review.maintainability || 'N/A'}/10</span>
+                                </div>
+                            </div>
+                            <p class="metric-description">${analysis.code_review.maintainability?.assessment || analysis.code_review.maintainability || 'No assessment available'}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Line-by-Line Analysis -->
+                    ${analysis.code_review.line_by_line_analysis && analysis.code_review.line_by_line_analysis.length > 0 ? `
+                        <div class="line-analysis-section">
+                            <h4><i class="fas fa-list-ol"></i> Line-by-Line Quality Analysis</h4>
+                            <div class="line-analysis-grid">
+                                ${analysis.code_review.line_by_line_analysis.map(line => `
+                                    <div class="line-analysis-item">
+                                        <div class="line-header">
+                                            <span class="line-number">Line ${line.line_number}</span>
+                                            <div class="line-quality-score">
+                                                <span class="score-label">Quality:</span>
+                                                <div class="mini-stars">
+                                                    ${generateStars(line.quality_score || 0, true)}
+                                                </div>
+                                                <span class="score-number">${line.quality_score}/10</span>
+                                            </div>
+                                        </div>
+                                        <div class="line-content-display">
+                                            <code>${line.line_content}</code>
+                                        </div>
+                                        ${line.issues && line.issues.length > 0 ? `
+                                            <div class="line-issues">
+                                                <h6><i class="fas fa-exclamation-circle"></i> Issues:</h6>
+                                                <ul>${line.issues.map(issue => `<li>${issue}</li>`).join('')}</ul>
+                                            </div>
+                                        ` : ''}
+                                        ${line.suggestions && line.suggestions.length > 0 ? `
+                                            <div class="line-suggestions">
+                                                <h6><i class="fas fa-lightbulb"></i> Suggestions:</h6>
+                                                <ul>${line.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}</ul>
+                                            </div>
+                                        ` : ''}
+                                        ${line.complexity_note ? `
+                                            <div class="line-complexity">
+                                                <h6><i class="fas fa-chart-line"></i> Complexity Impact:</h6>
+                                                <p>${line.complexity_note}</p>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // Security Analysis Section
+        if (analysis.security_analysis) {
+            html += `
+                <div class="analysis-section security-section">
+                    <h3><i class="fas fa-shield-alt"></i> Security Analysis</h3>
+                    <div class="security-grid">
+                        <div class="security-item">
+                            <h4>Vulnerabilities Found</h4>
+                            <ul class="vulnerability-list">
+                                ${(analysis.security_analysis.vulnerabilities || []).map(vuln => `<li><i class="fas fa-exclamation-triangle"></i> ${vuln}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="security-item">
+                            <h4>Security Recommendations</h4>
+                            <ul class="recommendation-list">
+                                ${(analysis.security_analysis.recommendations || []).map(rec => `<li><i class="fas fa-shield-alt"></i> ${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Performance Analysis Section
+        if (analysis.performance_analysis) {
+            html += `
+                <div class="analysis-section performance-section">
+                    <h3><i class="fas fa-rocket"></i> Performance & Complexity Analysis</h3>
+                    
+                    <!-- Complexity Overview -->
+                    <div class="complexity-overview">
+                        <div class="complexity-card time-complexity">
+                            <div class="complexity-header">
+                                <i class="fas fa-clock"></i>
+                                <h4>Time Complexity</h4>
+                            </div>
+                            <div class="complexity-value">${analysis.performance_analysis.time_complexity?.overall || 'Not analyzed'}</div>
+                        </div>
+                        <div class="complexity-card space-complexity">
+                            <div class="complexity-header">
+                                <i class="fas fa-memory"></i>
+                                <h4>Space Complexity</h4>
+                            </div>
+                            <div class="complexity-value">${analysis.performance_analysis.space_complexity?.overall || 'Not analyzed'}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detailed Complexity Breakdown -->
+                    ${analysis.performance_analysis.time_complexity?.breakdown && analysis.performance_analysis.time_complexity.breakdown.length > 0 ? `
+                        <div class="complexity-breakdown">
+                            <h4><i class="fas fa-chart-line"></i> Time Complexity Breakdown</h4>
+                            <div class="breakdown-grid">
+                                ${analysis.performance_analysis.time_complexity.breakdown.map(item => `
+                                    <div class="breakdown-item">
+                                        <div class="breakdown-header">
+                                            <span class="function-name">${item.function_name}</span>
+                                            <span class="line-range">Lines ${item.lines}</span>
+                                            <span class="complexity-badge">${item.complexity}</span>
+                                        </div>
+                                        <p class="breakdown-explanation">${item.explanation}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${analysis.performance_analysis.space_complexity?.breakdown && analysis.performance_analysis.space_complexity.breakdown.length > 0 ? `
+                        <div class="complexity-breakdown">
+                            <h4><i class="fas fa-hdd"></i> Space Complexity Breakdown</h4>
+                            <div class="breakdown-grid">
+                                ${analysis.performance_analysis.space_complexity.breakdown.map(item => `
+                                    <div class="breakdown-item">
+                                        <div class="breakdown-header">
+                                            <span class="function-name">${item.component}</span>
+                                            <span class="line-range">Lines ${item.lines}</span>
+                                            <span class="complexity-badge space">${item.complexity}</span>
+                                        </div>
+                                        <p class="breakdown-explanation">${item.explanation}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Complexity Analysis Details -->
+                    ${analysis.performance_analysis.complexity_analysis ? `
+                        <div class="complexity-details">
+                            <h4><i class="fas fa-analytics"></i> Complexity Analysis</h4>
+                            <div class="complexity-scenarios">
+                                <div class="scenario best-case">
+                                    <h5>Best Case</h5>
+                                    <p>${analysis.performance_analysis.complexity_analysis.best_case}</p>
+                                </div>
+                                <div class="scenario average-case">
+                                    <h5>Average Case</h5>
+                                    <p>${analysis.performance_analysis.complexity_analysis.average_case}</p>
+                                </div>
+                                <div class="scenario worst-case">
+                                    <h5>Worst Case</h5>
+                                    <p>${analysis.performance_analysis.complexity_analysis.worst_case}</p>
+                                </div>
+                            </div>
+                            ${analysis.performance_analysis.complexity_analysis.scalability_notes ? `
+                                <div class="scalability-notes">
+                                    <h5><i class="fas fa-expand-arrows-alt"></i> Scalability Notes</h5>
+                                    <p>${analysis.performance_analysis.complexity_analysis.scalability_notes}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Performance Issues and Optimizations -->
+                    <div class="performance-grid">
+                        <div class="performance-item bottlenecks">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Performance Bottlenecks</h4>
+                            <ul>${(analysis.performance_analysis.bottlenecks || []).map(bottleneck => `<li>${bottleneck}</li>`).join('')}</ul>
+                        </div>
+                        <div class="performance-item optimizations">
+                            <h4><i class="fas fa-lightbulb"></i> Optimization Suggestions</h4>
+                            <ul>${(analysis.performance_analysis.optimizations || []).map(opt => `<li>${opt}</li>`).join('')}</ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Improvement Suggestions Section
+        if (analysis.improvement_suggestions) {
+            html += `
+                <div class="analysis-section improvement-section">
+                    <h3><i class="fas fa-lightbulb"></i> Improvement Suggestions</h3>
+                    <div class="improvement-grid">
+                        <div class="improvement-item">
+                            <h4>Best Practices</h4>
+                            <ul>${(analysis.improvement_suggestions.best_practices || []).map(practice => `<li>${practice}</li>`).join('')}</ul>
+                        </div>
+                        <div class="improvement-item">
+                            <h4>Refactoring Ideas</h4>
+                            <ul>${(analysis.improvement_suggestions.refactoring || []).map(idea => `<li>${idea}</li>`).join('')}</ul>
+                        </div>
+                        <div class="improvement-item">
+                            <h4>Modern Features</h4>
+                            <ul>${(analysis.improvement_suggestions.modern_features || []).map(feature => `<li>${feature}</li>`).join('')}</ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Priority Fixes
+        if (analysis.summary?.priority_fixes) {
+            html += `
+                <div class="analysis-section priority-section">
+                    <h3><i class="fas fa-exclamation-circle"></i> Priority Fixes</h3>
+                    <div class="priority-list">
+                        ${analysis.summary.priority_fixes.map((fix, index) => `
+                            <div class="priority-item">
+                                <span class="priority-number">${index + 1}</span>
+                                <span class="priority-text">${fix}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        contentContainer.innerHTML = html;
+    } catch (e) {
+        contentContainer.innerHTML = `
+            <div class="analysis-text">
+                <pre>${analysisText}</pre>
+            </div>
+        `;
+    }
+    
+    resultContainer.style.display = 'block';
+    resultContainer.scrollIntoView({ behavior: 'smooth' });
+    
+    // Re-initialize Prism for syntax highlighting
+    if (typeof Prism !== 'undefined') {
+        Prism.highlightAll();
+    }
+}
+
+function clearResults() {
+    const analysisResult = document.getElementById('analysisResult');
+    const reviewResult = document.getElementById('reviewResult');
+    
+    if (analysisResult) analysisResult.style.display = 'none';
+    if (reviewResult) reviewResult.style.display = 'none';
+}
+
+// Function to copy fixed code
+async function copyFixedCode(code, buttonElement) {
+    const originalText = buttonElement ? buttonElement.innerHTML : '';
+    
+    if (buttonElement) {
+        buttonElement.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        buttonElement.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
+    }
+    
+    try {
+        await navigator.clipboard.writeText(code);
+        showMessage('Fixed code copied to clipboard!', 'success');
+    } catch (err) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            showMessage('Fixed code copied to clipboard!', 'success');
+        } catch (err) {
+            showMessage('Failed to copy fixed code', 'error');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+    
+    // Reset button after 2 seconds
+    if (buttonElement) {
+        setTimeout(() => {
+            buttonElement.innerHTML = originalText;
+            buttonElement.style.background = '';
+        }, 2000);
+    }
+}
+</script>
+{% endblock %}
