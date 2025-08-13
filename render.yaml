@@ -3,7 +3,7 @@ services:
     name: ai-code-review
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.16
@@ -11,3 +11,7 @@ services:
         sync: false
       - key: SECRET_KEY
         generateValue: true
+    disk:
+      name: app-instance
+      mountPath: /opt/render/project/src/instance
+      sizeGB: 1

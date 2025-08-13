@@ -15,7 +15,20 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///code_review.db'
+
+# Configure database with support for Render/production and local development
+# Prefer DATABASE_URL if provided (e.g., from a managed Postgres). Otherwise, use SQLite in the instance folder.
+os.makedirs(app.instance_path, exist_ok=True)
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # SQLAlchemy expects the 'postgresql://' scheme
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    sqlite_path = os.path.join(app.instance_path, 'code_review.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{sqlite_path}'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize extensions
@@ -55,6 +68,10 @@ class CodeReview(db.Model):
     review_result = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+# Ensure tables exist when running under a WSGI server (e.g., Gunicorn on Render)
+with app.app_context():
+    db.create_all()
 
 @login_manager.user_loader
 def load_user(user_id):
